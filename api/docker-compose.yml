@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=filehive
+      - POSTGRES_USER=filehive
+      - POSTGRES_PASSWORD=filehive
+
+    volumes:
+      - ./data:/var/lib/postgresql/data  
+    ports:
+      - "5432:5432" 
+
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-q', '-d', 'filehive', '-U', 'filehive']
+      interval: 20s
+      timeout: 10s
+      retries: 100
+      start_period: 10s
+      start_interval: 2s
+
+  django:
+    build: 
+      context: ./code/
+    # command: python manage.py runserver 0.0.0.0:8000 
+    # entrypoint: /app/entrypoint.sh
+    # command: ''
+    
+    volumes:
+      - ./code:/app  
+      # - /app/linuxVenv
+      
+    ports:
+      - "8000:8000"  
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+    
+    
